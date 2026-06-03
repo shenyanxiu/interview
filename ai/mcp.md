@@ -47,9 +47,49 @@ AI 应用 (Client)  ←→  MCP 协议  ←→  MCP Server (工具/数据源)
 - 把 MCP 当成某个具体工具，实际上它是一个协议/标准
 - 混淆 MCP Server 和普通 REST API：MCP Server 遵循特定协议格式，支持工具发现、上下文传递等 AI 特有需求
 
+## 定位：解决什么问题？
+
+LLM 是"大脑"，但没有"手脚"。MCP 是 AI 领域的"USB-C 接口"——一套标准化协议，让任意 AI 模型能以统一方式连接任意外部工具和数据源。
+
+> 💡 之前：每个 AI 应用 × 每个工具 = N × M 套对接代码。之后：每个 AI 应用接入 MCP（1次）× 每个工具实现 MCP Server（1次）= N + M。
+
+## 架构原理
+
+```plaintext
+MCP Client（AI应用侧）  ◄── JSON-RPC (stdio/SSE) ──►  MCP Server（工具侧）
+```
+
+### 三个核心概念
+
+| 概念 | 作用 | 类比 |
+|------|------|------|
+| Tools | 可执行操作（Agent 主动调用） | 函数/API |
+| Resources | 数据源（Agent 读取上下文） | 文件/数据库表 |
+| Prompts | 预定义的提示模板 | 函数模板 |
+
+## 工作流程
+
+1. Client 启动 Server 进程（或连接远程 Server）
+2. Client 调用 `tools/list` 获取工具列表（名称 + 描述 + 输入 schema）
+3. Agent 根据用户意图决定调用哪个 Tool
+4. Client 发送 `tools/call` 请求 → Server 执行 → 返回结果
+5. Agent 拿到结果继续推理
+
+## 对比之前的方案（Function Calling）
+
+| 维度 | Function Calling | MCP |
+|------|-----------------|-----|
+| 标准化 | 各家格式不同 | 统一协议，一次实现处处可用 |
+| 复用性 | 工具绑定在特定 AI 应用 | Server 独立，任何 Client 都能接 |
+| 生态 | 封闭 | 开放标准，社区共建 |
+| 能力 | 只有 Tool 调用 | Tool + Resource + Prompt |
+| 安全 | 交给应用层自己做 | 协议层内置权限机制 |
+
+
 ## 知识延伸
 
 - MCP 与 OpenAI Function Calling 的区别
 - MCP Server 的开发与部署
 - MCP 生态中的 Transport 层（stdio、HTTP SSE）
 - 安全性考量：权限控制、沙箱隔离
+
